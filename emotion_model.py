@@ -1,0 +1,112 @@
+"""
+CNN Model for Emotion Classification
+This module contains the CNN architecture for facial emotion recognition.
+"""
+
+import numpy as np
+import cv2
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
+
+
+class EmotionModel:
+    """CNN model for emotion classification"""
+    
+    # Emotion labels
+    EMOTIONS = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+    
+    def __init__(self, input_shape=(48, 48, 1), num_classes=7):
+        self.input_shape = input_shape
+        self.num_classes = num_classes
+        self.model = None
+        
+    def build_model(self):
+        """Build the CNN architecture for emotion recognition"""
+        model = Sequential([
+            # First convolutional block
+            layers.Conv2D(32, (3, 3), activation='relu', input_shape=self.input_shape),
+            layers.BatchNormalization(),
+            layers.Conv2D(32, (3, 3), activation='relu'),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Dropout(0.25),
+            
+            # Second convolutional block
+            layers.Conv2D(64, (3, 3), activation='relu'),
+            layers.BatchNormalization(),
+            layers.Conv2D(64, (3, 3), activation='relu'),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Dropout(0.25),
+            
+            # Third convolutional block
+            layers.Conv2D(128, (3, 3), activation='relu'),
+            layers.BatchNormalization(),
+            layers.Conv2D(128, (3, 3), activation='relu'),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Dropout(0.25),
+            
+            # Flatten and dense layers
+            layers.Flatten(),
+            layers.Dense(512, activation='relu'),
+            layers.BatchNormalization(),
+            layers.Dropout(0.5),
+            layers.Dense(256, activation='relu'),
+            layers.BatchNormalization(),
+            layers.Dropout(0.5),
+            layers.Dense(self.num_classes, activation='softmax')
+        ])
+        
+        model.compile(
+            optimizer=Adam(learning_rate=0.001),
+            loss='categorical_crossentropy',
+            metrics=['accuracy']
+        )
+        
+        self.model = model
+        return model
+    
+    def load_weights(self, weights_path):
+        """Load pre-trained weights"""
+        if self.model is None:
+            self.build_model()
+        self.model.load_weights(weights_path)
+        print(f"Loaded weights from {weights_path}")
+    
+    def predict(self, face_image):
+        """Predict emotion from a face image"""
+        if self.model is None:
+            raise ValueError("Model not built or loaded. Call build_model() or load_weights() first.")
+        
+        # Convert to numpy array if needed
+        if isinstance(face_image, tf.Tensor):
+            face_image = face_image.numpy()
+        
+        # Handle different input formats
+        if len(face_image.shape) == 3:
+            if face_image.shape[2] == 3:
+                # Convert BGR to grayscale (OpenCV uses BGR)
+                face_image = np.dot(face_image[...,:3], [0.2989, 0.5870, 0.1140])
+            elif face_image.shape[2] == 1:
+                face_image = face_image[:, :, 0]
+        
+        # Ensure it's 2D
+        if len(face_image.shape) != 2:
+            raise ValueError(f"Expected 2D grayscale image, got shape {face_image.shape}")
+        
+        # Resize to model input size
+        face_image = cv2.resize(face_image, (self.input_shape[0], self.input_shape[1]))
+        
+        # Normalize to [0, 1]
+        face_image = face_image.astype(np.float32) / 255.0
+        
+        # Reshape to add channel and batch dimensions: (1, 48, 48, 1)
+        face_image = face_image.reshape(1, self.input_shape[0], self.input_shape[1], 1)
+        
+        # Predict
+        predictions = self.model.predict(face_image, verbose=0)
+        emotion_idx = np.argmax(predictions[0])
+        confidence = predictions[0][emotion_idx]
+        
+        return self.EMOTIONS[emotion_idx], confidence, predictions[0]
