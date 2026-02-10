@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Real-time Facial Emotion Recognition System
 
 A deep learning-based system that captures live camera input, detects faces, and classifies emotions in real-time using CNN models. The system is optimized for accuracy and low latency.
@@ -133,3 +134,7 @@ face_detection_ntcc/
 ## License
 
 This project is open source and available for educational and research purposes.
+=======
+# Emotion-Based-Face-Detection-System
+tym pass
+>>>>>>> c2b076ba60f741d5887ce344bc7b686d7e6b5a58
