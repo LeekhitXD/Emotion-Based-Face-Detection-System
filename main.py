@@ -115,6 +115,12 @@ class EmotionRecognitionSystem:
         print("Starting emotion recognition system...")
         print("Press 'q' to quit")
         
+        # Create window explicitly (helps on macOS so the camera window appears)
+        cv2.namedWindow('Emotion Recognition', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('Emotion Recognition', 640, 480)
+        if hasattr(cv2, 'startWindowThread'):
+            cv2.startWindowThread()
+        
         try:
             while True:
                 ret, frame = cap.read()
