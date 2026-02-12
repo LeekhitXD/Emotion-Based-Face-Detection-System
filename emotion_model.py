@@ -8,8 +8,12 @@ import cv2
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+from tensorflow.keras import regularizers
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
+
+# L2 regularization for better generalization
+L2_REG = 1e-4
 
 
 class EmotionModel:
@@ -24,43 +28,46 @@ class EmotionModel:
         self.model = None
         
     def build_model(self):
-        """Build the CNN architecture for emotion recognition"""
+        """Build the CNN architecture for emotion recognition (deeper + L2 for higher accuracy)"""
+        reg = regularizers.l2(L2_REG)
         model = Sequential([
             # First convolutional block
-            layers.Conv2D(32, (3, 3), activation='relu', input_shape=self.input_shape),
+            layers.Conv2D(32, (3, 3), activation='relu', kernel_regularizer=reg, input_shape=self.input_shape),
             layers.BatchNormalization(),
-            layers.Conv2D(32, (3, 3), activation='relu'),
+            layers.Conv2D(32, (3, 3), activation='relu', kernel_regularizer=reg),
             layers.MaxPooling2D(pool_size=(2, 2)),
             layers.Dropout(0.25),
-            
             # Second convolutional block
-            layers.Conv2D(64, (3, 3), activation='relu'),
+            layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=reg),
             layers.BatchNormalization(),
-            layers.Conv2D(64, (3, 3), activation='relu'),
+            layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=reg),
             layers.MaxPooling2D(pool_size=(2, 2)),
             layers.Dropout(0.25),
-            
             # Third convolutional block
-            layers.Conv2D(128, (3, 3), activation='relu'),
+            layers.Conv2D(128, (3, 3), activation='relu', kernel_regularizer=reg),
             layers.BatchNormalization(),
-            layers.Conv2D(128, (3, 3), activation='relu'),
+            layers.Conv2D(128, (3, 3), activation='relu', kernel_regularizer=reg),
             layers.MaxPooling2D(pool_size=(2, 2)),
             layers.Dropout(0.25),
-            
+            # Fourth convolutional block (extra capacity)
+            layers.Conv2D(256, (3, 3), activation='relu', kernel_regularizer=reg),
+            layers.BatchNormalization(),
+            layers.Conv2D(256, (3, 3), activation='relu', kernel_regularizer=reg),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Dropout(0.25),
             # Flatten and dense layers
             layers.Flatten(),
-            layers.Dense(512, activation='relu'),
+            layers.Dense(512, activation='relu', kernel_regularizer=reg),
             layers.BatchNormalization(),
             layers.Dropout(0.5),
-            layers.Dense(256, activation='relu'),
+            layers.Dense(256, activation='relu', kernel_regularizer=reg),
             layers.BatchNormalization(),
             layers.Dropout(0.5),
             layers.Dense(self.num_classes, activation='softmax')
         ])
-        
         model.compile(
-            optimizer=Adam(learning_rate=0.001),
-            loss='categorical_crossentropy',
+            optimizer=Adam(learning_rate=0.0005),
+            loss=keras.losses.CategoricalCrossentropy(label_smoothing=0.1),
             metrics=['accuracy']
         )
         
@@ -97,7 +104,11 @@ class EmotionModel:
         
         # Resize to model input size
         face_image = cv2.resize(face_image, (self.input_shape[0], self.input_shape[1]))
-        
+        # CLAHE (match training preprocessing for better accuracy)
+        if face_image.dtype != np.uint8:
+            face_image = (np.clip(face_image, 0, 1) * 255).astype(np.uint8)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        face_image = clahe.apply(face_image)
         # Normalize to [0, 1]
         face_image = face_image.astype(np.float32) / 255.0
         
