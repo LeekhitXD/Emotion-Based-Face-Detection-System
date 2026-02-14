@@ -188,21 +188,31 @@ def train_model(epochs=50, batch_size=64, data_path='fer2013.csv', save_path='em
     model = EmotionModel()
     model.build_model()
     
-    # Data augmentation (optional; requires scipy for some transforms)
+    # Stronger data augmentation (requires scipy; improves accuracy)
     use_augmentation = HAS_SCIPY
     if use_augmentation:
         datagen = keras.preprocessing.image.ImageDataGenerator(
-            rotation_range=10,
-            width_shift_range=0.1,
-            height_shift_range=0.1,
+            rotation_range=15,
+            width_shift_range=0.15,
+            height_shift_range=0.15,
             horizontal_flip=True,
-            zoom_range=0.1
+            zoom_range=0.15,
+            shear_range=5.0,
+            brightness_range=(0.85, 1.15),
+            fill_mode='reflect'
         )
     else:
         datagen = None
         print("Training without augmentation (install scipy for augmentation).")
     
-    # Callbacks
+    # Cosine decay learning rate (smooth decay often improves accuracy)
+    def cosine_lr_schedule(epoch, lr):
+        # Decay from initial to min over total epochs
+        initial_lr = 0.0005
+        min_lr = 1e-5
+        progress = min(epoch / max(epochs - 1, 1), 1.0)
+        return min_lr + 0.5 * (initial_lr - min_lr) * (1 + np.cos(np.pi * progress))
+    
     callbacks = [
         keras.callbacks.ModelCheckpoint(
             save_path,
@@ -211,16 +221,17 @@ def train_model(epochs=50, batch_size=64, data_path='fer2013.csv', save_path='em
             mode='max',
             verbose=1
         ),
+        keras.callbacks.LearningRateScheduler(cosine_lr_schedule, verbose=0),
         keras.callbacks.ReduceLROnPlateau(
             monitor='val_loss',
             factor=0.5,
-            patience=5,
-            min_lr=0.0001,
+            patience=4,
+            min_lr=1e-5,
             verbose=1
         ),
         keras.callbacks.EarlyStopping(
             monitor='val_loss',
-            patience=10,
+            patience=12,
             restore_best_weights=True,
             verbose=1
         )

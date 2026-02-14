@@ -55,8 +55,8 @@ class EmotionModel:
             layers.Conv2D(256, (3, 3), activation='relu', kernel_regularizer=reg),
             layers.MaxPooling2D(pool_size=(2, 2)),
             layers.Dropout(0.25),
-            # Flatten and dense layers
-            layers.Flatten(),
+            # Global average pooling (reduces overfitting, improves generalization)
+            layers.GlobalAveragePooling2D(),
             layers.Dense(512, activation='relu', kernel_regularizer=reg),
             layers.BatchNormalization(),
             layers.Dropout(0.5),
@@ -113,11 +113,14 @@ class EmotionModel:
         face_image = face_image.astype(np.float32) / 255.0
         
         # Reshape to add channel and batch dimensions: (1, 48, 48, 1)
-        face_image = face_image.reshape(1, self.input_shape[0], self.input_shape[1], 1)
+        face_batch = face_image.reshape(1, self.input_shape[0], self.input_shape[1], 1)
         
-        # Predict
-        predictions = self.model.predict(face_image, verbose=0)
-        emotion_idx = np.argmax(predictions[0])
-        confidence = predictions[0][emotion_idx]
+        # Test-time augmentation: average predictions on original + horizontally flipped (boosts accuracy)
+        pred_orig = self.model.predict(face_batch, verbose=0)[0]
+        face_flip = np.flip(face_batch, axis=2)  # flip width
+        pred_flip = self.model.predict(face_flip, verbose=0)[0]
+        predictions = (np.array(pred_orig) + np.array(pred_flip)) / 2.0
         
-        return self.EMOTIONS[emotion_idx], confidence, predictions[0]
+        emotion_idx = int(np.argmax(predictions))
+        confidence = float(predictions[emotion_idx])
+        return self.EMOTIONS[emotion_idx], confidence, predictions
