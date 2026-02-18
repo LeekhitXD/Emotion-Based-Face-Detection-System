@@ -26,6 +26,12 @@ class EmotionModel:
         self.input_shape = input_shape
         self.num_classes = num_classes
         self.model = None
+        self._clahe = None  # cached for FPS
+
+    def _get_clahe(self):
+        if self._clahe is None:
+            self._clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        return self._clahe
         
     def build_model(self):
         """Build the CNN architecture for emotion recognition (deeper + L2 for higher accuracy)"""
@@ -49,10 +55,10 @@ class EmotionModel:
             layers.Conv2D(128, (3, 3), activation='relu', kernel_regularizer=reg),
             layers.MaxPooling2D(pool_size=(2, 2)),
             layers.Dropout(0.25),
-            # Fourth convolutional block (extra capacity)
-            layers.Conv2D(256, (3, 3), activation='relu', kernel_regularizer=reg),
+            # Fourth convolutional block (padding='same' so 2x2 spatial size is valid for 3x3 conv)
+            layers.Conv2D(256, (3, 3), activation='relu', kernel_regularizer=reg, padding='same'),
             layers.BatchNormalization(),
-            layers.Conv2D(256, (3, 3), activation='relu', kernel_regularizer=reg),
+            layers.Conv2D(256, (3, 3), activation='relu', kernel_regularizer=reg, padding='same'),
             layers.MaxPooling2D(pool_size=(2, 2)),
             layers.Dropout(0.25),
             # Global average pooling (reduces overfitting, improves generalization)
@@ -81,8 +87,10 @@ class EmotionModel:
         self.model.load_weights(weights_path)
         print(f"Loaded weights from {weights_path}")
     
-    def predict(self, face_image):
-        """Predict emotion from a face image"""
+    def predict(self, face_image, use_tta=False):
+        """Predict emotion from a face image.
+        use_tta: if True, average with flipped image (better accuracy, ~2x slower).
+        """
         if self.model is None:
             raise ValueError("Model not built or loaded. Call build_model() or load_weights() first.")
         
@@ -93,33 +101,26 @@ class EmotionModel:
         # Handle different input formats
         if len(face_image.shape) == 3:
             if face_image.shape[2] == 3:
-                # Convert BGR to grayscale (OpenCV uses BGR)
                 face_image = np.dot(face_image[...,:3], [0.2989, 0.5870, 0.1140])
             elif face_image.shape[2] == 1:
                 face_image = face_image[:, :, 0]
         
-        # Ensure it's 2D
         if len(face_image.shape) != 2:
             raise ValueError(f"Expected 2D grayscale image, got shape {face_image.shape}")
         
-        # Resize to model input size
         face_image = cv2.resize(face_image, (self.input_shape[0], self.input_shape[1]))
-        # CLAHE (match training preprocessing for better accuracy)
         if face_image.dtype != np.uint8:
             face_image = (np.clip(face_image, 0, 1) * 255).astype(np.uint8)
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        face_image = clahe.apply(face_image)
-        # Normalize to [0, 1]
+        face_image = self._get_clahe().apply(face_image)
         face_image = face_image.astype(np.float32) / 255.0
-        
-        # Reshape to add channel and batch dimensions: (1, 48, 48, 1)
         face_batch = face_image.reshape(1, self.input_shape[0], self.input_shape[1], 1)
         
-        # Test-time augmentation: average predictions on original + horizontally flipped (boosts accuracy)
-        pred_orig = self.model.predict(face_batch, verbose=0)[0]
-        face_flip = np.flip(face_batch, axis=2)  # flip width
-        pred_flip = self.model.predict(face_flip, verbose=0)[0]
-        predictions = (np.array(pred_orig) + np.array(pred_flip)) / 2.0
+        if use_tta:
+            pred_orig = self.model.predict(face_batch, verbose=0)[0]
+            pred_flip = self.model.predict(np.flip(face_batch, axis=2), verbose=0)[0]
+            predictions = (np.array(pred_orig) + np.array(pred_flip)) / 2.0
+        else:
+            predictions = self.model.predict(face_batch, verbose=0)[0]
         
         emotion_idx = int(np.argmax(predictions))
         confidence = float(predictions[emotion_idx])

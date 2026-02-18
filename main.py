@@ -1,24 +1,47 @@
 import cv2
 import numpy as np
 import time
+from collections import deque
 from face_detector import FaceDetector
 from emotion_model import EmotionModel
+
+
+def _padded_face_roi(frame, x, y, w, h, pad_ratio=0.15):
+    """Expand face bbox by pad_ratio and clamp to frame for better model input."""
+    H, W = frame.shape[:2]
+    pad_w = int(w * pad_ratio)
+    pad_h = int(h * pad_ratio)
+    x1 = max(0, x - pad_w)
+    y1 = max(0, y - pad_h)
+    x2 = min(W, x + w + pad_w)
+    y2 = min(H, y + h + pad_h)
+    return frame[y1:y2, x1:x2]
 
 
 class EmotionRecognitionSystem:
     """Main system for real-time emotion recognition"""
     
-    def __init__(self, camera_index=0, model_weights_path=None):
+    def __init__(self, camera_index=0, model_weights_path=None, use_tta=False,
+                 emotion_every_n=2, smooth_frames=5):
         """
-        Initialize the emotion recognition system
-        
+        Initialize the emotion recognition system.
+
         Args:
             camera_index: Camera device index (default: 0)
             model_weights_path: Path to pre-trained model weights (optional)
+            use_tta: Use test-time augmentation (2x slower, slightly more accurate)
+            emotion_every_n: Run emotion model every N frames (1=every frame, 2=half cost)
+            smooth_frames: Number of frames to average for stable predictions (0=off)
         """
         self.camera_index = camera_index
         self.face_detector = FaceDetector()
         self.emotion_model = EmotionModel()
+        self.use_tta = use_tta
+        self.emotion_every_n = max(1, emotion_every_n)
+        self.smooth_frames = max(0, smooth_frames)
+        self._frame_counter = 0
+        self._last_emotions = []  # [(emotion, confidence), ...] reused when skipping
+        self._prediction_history = []  # list of deques of prediction vectors per face slot
         
         # Initialize model
         if model_weights_path:
@@ -128,27 +151,49 @@ class EmotionRecognitionSystem:
                     print("Failed to grab frame")
                     break
                 
-                # Flip frame horizontally for mirror effect
                 frame = cv2.flip(frame, 1)
-                
-                # Detect faces
                 faces = self.face_detector.detect_faces(frame)
                 
-                # Process each detected face
-                emotions = []
-                for (x, y, w, h) in faces:
-                    # Extract face region
-                    face_roi = frame[y:y+h, x:x+w]
-                    
-                    # Predict emotion
-                    try:
-                        emotion, confidence, _ = self.emotion_model.predict(face_roi)
-                        emotions.append((emotion, confidence))
-                    except Exception as e:
-                        print(f"Error predicting emotion: {e}")
-                        emotions.append(("Unknown", 0.0))
+                # Run emotion every N frames to boost FPS; reuse last result otherwise
+                run_emotion = (self._frame_counter % self.emotion_every_n == 0)
+                self._frame_counter += 1
                 
-                # Draw results
+                if run_emotion and len(faces) > 0:
+                    # Ensure we have a smoothing deque per face slot
+                    while len(self._prediction_history) < len(faces):
+                        self._prediction_history.append(deque(maxlen=self.smooth_frames))
+                    self._prediction_history = self._prediction_history[:len(faces)]
+                    
+                    emotions = []
+                    for i, (x, y, w, h) in enumerate(faces):
+                        face_roi = _padded_face_roi(frame, x, y, w, h)
+                        if face_roi.size == 0:
+                            emotions.append(("Unknown", 0.0))
+                            continue
+                        try:
+                            emotion, confidence, pred_vec = self.emotion_model.predict(
+                                face_roi, use_tta=self.use_tta
+                            )
+                            if self.smooth_frames > 0 and i < len(self._prediction_history):
+                                self._prediction_history[i].append(pred_vec)
+                                hist = list(self._prediction_history[i])
+                                avg_pred = np.mean(hist, axis=0)
+                                emotion_idx = int(np.argmax(avg_pred))
+                                emotion = self.emotion_model.EMOTIONS[emotion_idx]
+                                confidence = float(avg_pred[emotion_idx])
+                            emotions.append((emotion, confidence))
+                        except Exception as e:
+                            print(f"Error predicting emotion: {e}")
+                            emotions.append(("Unknown", 0.0))
+                    self._last_emotions = emotions
+                else:
+                    emotions = self._last_emotions if self._last_emotions else []
+                    # If face count changed, reuse what we can or pad
+                    if len(emotions) != len(faces):
+                        emotions = emotions[:len(faces)]
+                        while len(emotions) < len(faces):
+                            emotions.append(("Unknown", 0.0))
+                
                 if faces is not None and len(faces) > 0:
                     self.draw_results(frame, faces, emotions)
                 
@@ -198,13 +243,33 @@ def main():
         default=None,
         help='Path to pre-trained model weights file'
     )
-    
+    parser.add_argument(
+        '--emotion-every',
+        type=int,
+        default=2,
+        metavar='N',
+        help='Run emotion model every N frames (default: 2, higher FPS)'
+    )
+    parser.add_argument(
+        '--smooth',
+        type=int,
+        default=5,
+        metavar='K',
+        help='Smooth predictions over last K frames (default: 5, more stable labels)'
+    )
+    parser.add_argument(
+        '--tta',
+        action='store_true',
+        help='Use test-time augmentation (better accuracy, lower FPS)'
+    )
     args = parser.parse_args()
     
-    # Create and run system
     system = EmotionRecognitionSystem(
         camera_index=args.camera,
-        model_weights_path=args.weights
+        model_weights_path=args.weights,
+        use_tta=args.tta,
+        emotion_every_n=args.emotion_every,
+        smooth_frames=args.smooth
     )
     
     system.run()

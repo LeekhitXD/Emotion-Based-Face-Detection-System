@@ -38,12 +38,12 @@ class FaceDetector:
         """
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         
-        # Detect faces with optimized parameters for speed
+        # Detect faces: slightly coarser scaleFactor for speed, minSize to skip tiny faces
         faces = self.face_cascade.detectMultiScale(
             gray,
-            scaleFactor=1.1,
+            scaleFactor=1.15,
             minNeighbors=5,
-            minSize=(30, 30),
+            minSize=(40, 40),
             flags=cv2.CASCADE_SCALE_IMAGE
         )
         
