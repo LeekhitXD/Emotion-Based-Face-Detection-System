@@ -1,0 +1,352 @@
+{
+  "start_time": 1772008954.0294342,
+  "duration_seconds": 60.561147928237915,
+  "samples": [
+    {
+      "time": 2.82,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 3.83,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 4.83,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 5.85,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 6.85,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 7.88,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 8.9,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 9.93,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 10.96,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 12.02,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 13.03,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 14.07,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 15.08,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 16.1,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 17.11,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 18.13,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 19.14,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 20.18,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 21.2,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 22.21,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 23.24,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 24.27,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 25.27,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 26.34,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 27.36,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 28.37,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 29.38,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 30.4,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 31.48,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 32.5,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 33.51,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 34.51,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 35.51,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 36.54,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 37.61,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 38.64,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 39.65,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 40.67,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 41.68,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 42.68,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 43.71,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 44.75,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 45.77,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 46.78,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 47.82,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 48.84,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 49.87,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 50.88,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 51.89,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 52.92,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 53.98,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 55.04,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 56.11,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 57.14,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    },
+    {
+      "time": 58.17,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 59.2,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    },
+    {
+      "time": 60.2,
+      "emotion": "Sad",
+      "confidence": 0.244,
+      "voice": null
+    }
+  ],
+  "summary": {
+    "Neutral": 26,
+    "Sad": 31
+  }
+}

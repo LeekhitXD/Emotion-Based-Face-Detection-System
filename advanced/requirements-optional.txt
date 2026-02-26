@@ -1,0 +1,4 @@
+# Optional for voice tone analysis in wellness_app (--voice)
+sounddevice>=0.4.6
+# Optional: improves voice tone cues (stressed/neutral/positive)
+# librosa>=0.10.0

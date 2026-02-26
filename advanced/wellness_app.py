@@ -87,8 +87,14 @@ def run_wellness_app(camera_index=0, weights_path=None, use_voice=False):
             else:
                 session.record("Neutral", 0.5)  # no face = neutral for timeline continuity
 
-            # Build dashboard and show side-by-side
+            # Build dashboard and show side-by-side.
+            # Resize panel to match frame height so hstack works without shape errors.
             panel = build_dashboard_panel(session, width=panel_w, height=panel_h)
+            ph, pw = panel.shape[:2]
+            if ph != h:
+                scale = h / float(ph)
+                new_w = int(pw * scale)
+                panel = cv2.resize(panel, (new_w, h), interpolation=cv2.INTER_AREA)
             combined = np.hstack([frame, panel])
             cv2.imshow(window_name, combined)
             if cv2.waitKey(1) & 0xFF == ord("q"):

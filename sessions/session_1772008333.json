@@ -1,0 +1,15 @@
+{
+  "start_time": 1772008329.90785,
+  "duration_seconds": 3.480844020843506,
+  "samples": [
+    {
+      "time": 3.46,
+      "emotion": "Neutral",
+      "confidence": 0.5,
+      "voice": null
+    }
+  ],
+  "summary": {
+    "Neutral": 1
+  }
+}

@@ -55,17 +55,25 @@ class EmotionRecognitionSystem:
         self._stuck_cycle_offset = []  # used only when enable_variety=True
         
         # Initialize model
+        # If no explicit path is provided, try a sensible default produced by train_model.py
+        default_weights = "emotion_model_weights.h5"
+        if not model_weights_path and os.path.isfile(default_weights):
+            model_weights_path = default_weights
+            print(f"No weights path provided. Using default weights: {default_weights}")
+
         if model_weights_path:
             self.emotion_model.build_model()
             try:
                 self.emotion_model.load_weights(model_weights_path)
             except Exception as e:
                 print(f"Warning: Could not load weights from {model_weights_path}: {e}")
-                print("Using untrained model. Please train the model first.")
+                print("Using untrained model. Please verify the weights file or retrain the model.")
+                self.emotion_model.build_model()
         else:
             self.emotion_model.build_model()
-            print("Warning: No model weights provided. Using untrained model.")
-            print("The system will run but predictions will be random.")
+            print("Warning: No model weights provided and default weights file not found.")
+            print("The system will run but predictions will be random. "
+                  "Train the model with train_model.py to generate emotion_model_weights.h5.")
         
         # Performance tracking
         self.fps_history = []

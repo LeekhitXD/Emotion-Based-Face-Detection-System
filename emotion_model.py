@@ -87,18 +87,17 @@ class EmotionModel:
         self.model.load_weights(weights_path)
         print(f"Loaded weights from {weights_path}")
     
-    def predict(self, face_image, use_tta=False):
+    def predict(self, face_image, use_tta=False, temperature=1.0):
         """Predict emotion from a face image.
         use_tta: if True, average with flipped image (better accuracy, ~2x slower).
+        temperature: >1 softens predictions so other emotions can show (reduces one-class dominance).
         """
         if self.model is None:
             raise ValueError("Model not built or loaded. Call build_model() or load_weights() first.")
         
-        # Convert to numpy array if needed
         if isinstance(face_image, tf.Tensor):
             face_image = face_image.numpy()
         
-        # Handle different input formats
         if len(face_image.shape) == 3:
             if face_image.shape[2] == 3:
                 face_image = np.dot(face_image[...,:3], [0.2989, 0.5870, 0.1140])
@@ -120,7 +119,14 @@ class EmotionModel:
             pred_flip = self.model.predict(np.flip(face_batch, axis=2), verbose=0)[0]
             predictions = (np.array(pred_orig) + np.array(pred_flip)) / 2.0
         else:
-            predictions = self.model.predict(face_batch, verbose=0)[0]
+            predictions = np.array(self.model.predict(face_batch, verbose=0)[0], dtype=np.float64)
+        
+        # Temperature scaling: T>1 softens distribution so other emotions can appear (fixes one-class dominance)
+        if temperature != 1.0 and temperature > 0:
+            eps = 1e-8
+            predictions = np.clip(predictions, eps, 1.0)
+            predictions = np.power(predictions, 1.0 / temperature)
+            predictions = predictions / predictions.sum()
         
         emotion_idx = int(np.argmax(predictions))
         confidence = float(predictions[emotion_idx])
